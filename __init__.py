@@ -205,7 +205,7 @@ class IPTVSkill(CommonPlaySkill):
     def CPS_start(self, phrase, data):
         channel = Channel.from_json(data)
         url = str(channel.best_stream)
-        self.gui.play_video(url, channel.name)
+        self.gui.play_video(url, channel.name or phrase)
 
 
 def create_skill():
