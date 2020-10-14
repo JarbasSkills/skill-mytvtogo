@@ -1,33 +1,93 @@
 from mycroft.skills.common_play_skill import CommonPlaySkill, \
     CPSMatchLevel, CPSTrackStatus, CPSMatchType
-from ipytv import IPTV
-from ipytv.db import Channel
-from ipytv.collections import NewsChannels, MyTVToGo, MusicChannels, \
-    Portugal, Spain, US, France, Italy
+from mycroft.skills.core import intent_file_handler
+from pyvod import Collection, Media
+from os.path import join, dirname, exists
+from os import makedirs
 import random
+from shutil import copy
+from xdg import XDG_CACHE_HOME, XDG_DATA_HOME
+from json_database import JsonStorageXDG
 
 
-class IPTVSkill(CommonPlaySkill):
+class MyTVtoGoSkill(CommonPlaySkill):
 
     def __init__(self):
-        super().__init__("IP TV")
-        self.supported_media = [CPSMatchType.GENERIC, CPSMatchType.MUSIC,
-                                CPSMatchType.NEWS, CPSMatchType.TV,
+        super().__init__("MyTVToGo")
+        self.supported_media = [CPSMatchType.GENERIC,
+                                CPSMatchType.MUSIC,
+                                CPSMatchType.NEWS,
+                                CPSMatchType.TV,
                                 CPSMatchType.MOVIE]
 
-        # NOTE self.lang is taken into account during search for scoring
-        self.iptv = IPTV(lang=self.lang)
+        # database bootstrap
+        path = join(XDG_DATA_HOME, "json_database")
+        if not exists(path):
+            makedirs(path)
+        path = join(path, "mytvtogo.jsondb")
+        if not exists(path):
+            copy(join(dirname(__file__), "res", "mytvtogo.jsondb"), path)
+
+        # load channel catalog
+        self.mytvtogo = Collection("MyTVToGo",
+                    logo=join(dirname(__file__), "res", "MyTVToGo.png"),
+                    db_path=path)
+
+        # History
+        self.historyDB = JsonStorageXDG("mytvtogo-history")
+
+        if "model" in self.historyDB:
+            self.history_list = self.historyDB["model"]
+        else:
+            self.history_list = []
 
     def initialize(self):
-        self.add_event('skill-iptv.jarbasskills.home',
+        self.add_event('skill-mytvtogo.jarbasskills.home',
                        self.handle_homescreen)
+        self.gui.register_handler("skill-mytvtogo.jarbasskills.play_event",
+                                  self.play_video_event)
+        self.gui.register_handler("skill-mytvtogo.jarbasskills.clear_history",
+                                  self.play_video_event)
 
     def get_intro_message(self):
         self.speak_dialog("intro")
+        
+    @intent_file_handler('mytvtogohome.intent')
+    def handle_homescreen_utterance(self, message):
+        self.handle_homescreen({}) 
 
     # homescreen
     def handle_homescreen(self, message):
-        pass
+        self.build_homescreen()
+        
+    # build_homescreen
+    def build_homescreen(self):
+        # build a model for MyTVToGo
+        my_tv_to_go_dump = [ch.as_json() for ch in self.mytvtogo.entries]
+        self.gui["mytvtogoHomeModel"] = my_tv_to_go_dump
+
+        # set history model
+        self.gui["historyModel"] = []
+
+        self.gui.show_page("home.qml", override_idle=True)
+
+    # play via GUI event
+    def play_video_event(self, message):
+        channel_data = message.data["modelData"]
+
+        self.history_list.append(channel_data)
+        self.historyDB["model"] = self.history_list
+        self.historyDB.store()
+        self.gui["historyModel"] = self.historyDB["model"]
+
+        channel = Media.from_json(channel_data)
+        url = str(channel.streams[0])
+
+        self.gui.play_video(url, channel_data["title"])
+
+    # clear history event
+    def clear_history_event(self, message):
+        self.historyDB.clear()
 
     # common play
     def match_media_type(self, phrase, media_type):
@@ -109,76 +169,11 @@ class IPTVSkill(CommonPlaySkill):
 
         allowed_tags = self.match_topics(phrase, media_type)
 
-        matches = self.iptv.search(phrase,
-                                   tag_whitelist=allowed_tags,
-                                   lang_whitelist=allowed_langs,
-                                   max_res=5)
+        matches = []
+        # TODO
 
         if not len(matches):
-            self.log.debug("No user IPTV matches, looking up default channels")
-
-            if "pt" in allowed_langs:
-                matches = Portugal.search(phrase,
-                                          tag_whitelist=allowed_tags,
-                                          lang_whitelist=allowed_langs,
-                                          max_res=3)
-            elif "es" in allowed_langs:
-                matches = Spain.search(phrase,
-                                       tag_whitelist=allowed_tags,
-                                       lang_whitelist=allowed_langs,
-                                       max_res=3)
-            elif "fr" in allowed_langs:
-                matches = France.search(phrase,
-                                        tag_whitelist=allowed_tags,
-                                        lang_whitelist=allowed_langs,
-                                        max_res=3)
-            elif "it" in allowed_langs:
-                matches = Italy.search(phrase,
-                                       tag_whitelist=allowed_tags,
-                                       lang_whitelist=allowed_langs,
-                                       max_res=3)
-
-            elif "en" in allowed_langs:
-                matches = US.search(phrase,
-                                    tag_whitelist=allowed_tags,
-                                    lang_whitelist=allowed_langs,
-                                    max_res=3)
-
-            else:
-                matches = MyTVToGo.search(phrase,
-                                          tag_whitelist=allowed_tags,
-                                          lang_whitelist=allowed_langs,
-                                          max_res=3)
-                matches += NewsChannels.search(phrase,
-                                               tag_whitelist=allowed_tags,
-                                               max_res=3)
-                matches += MusicChannels.search(phrase,
-                                                tag_whitelist=allowed_tags,
-                                                max_res=3)
-                if self.lang.startswith("pt"):
-                    matches += Portugal.search(phrase,
-                                              tag_whitelist=allowed_tags,
-                                              max_res=3)
-                elif self.lang.startswith("es"):
-                    matches += Spain.search(phrase,
-                                              tag_whitelist=allowed_tags,
-                                              max_res=3)
-                elif self.lang.startswith("en"):
-                    matches += US.search(phrase,
-                                              tag_whitelist=allowed_tags,
-                                              max_res=3)
-                elif self.lang.startswith("fr"):
-                    matches += France.search(phrase,
-                                              tag_whitelist=allowed_tags,
-                                              max_res=3)
-                elif self.lang.startswith("it"):
-                    matches += Italy.search(phrase,
-                                              tag_whitelist=allowed_tags,
-                                              max_res=3)
-                matches = sorted(matches, key=lambda k: k[1], reverse=True)
-
-        if not len(matches):
-            self.log.debug("No IPTV matches")
+            self.log.debug("No MyTVtoGo matches")
             return None
 
         # TODO disambiguate
@@ -196,17 +191,18 @@ class IPTVSkill(CommonPlaySkill):
         elif score >= 0.5:
             match = CPSMatchLevel.TITLE
 
-        self.log.debug("Best TV channel: " + str(selected[0].as_json()))
+        self.log.debug("Best MyTVtoGo channel: " + str(selected[0].as_json()))
 
         if match is not None:
             return (phrase, match, matches[0][0].as_json())
         return None
 
     def CPS_start(self, phrase, data):
-        channel = Channel.from_json(data)
-        url = str(channel.best_stream)
+        channel = Media.from_json(data)
+        url = str(channel.streams[0])
+
         self.gui.play_video(url, channel.name or phrase)
 
 
 def create_skill():
-    return IPTVSkill()
+    return MyTVtoGoSkill()
