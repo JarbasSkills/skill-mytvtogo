@@ -1,11 +1,11 @@
-# <img src='./res/MyTVToGo_icon.png' card_color='#40DBB0' width='50' height='50' style='vertical-align:bottom'/> MyTVtoGo Skill
+# <img src='./res/MyTVToGo_icon_bg.png' card_color='#40DBB0' width='50' height='50' style='vertical-align:bottom'/> MyTVtoGo Skill
 
 MyTVtoGo for mycroft
 
 
 ## About 
 
-![](./res/MyTVToGo.png)
+![](./res/MyTVToGo_bg.png)
 
 ## Examples 
 
