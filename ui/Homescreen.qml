@@ -122,7 +122,7 @@ Mycroft.Delegate {
                     source: "images/home.png"
                     onClicked: {
                         categoryLayout.pop(categoryLayout.find(function(item) {
-    return item.name == "homeCat";}))
+                        return item.name == "homeCat";}))
                         highlightActiveCategory("Home")
                     }
                 }

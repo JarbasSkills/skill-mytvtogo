@@ -1,0 +1,5 @@
+{
+    "android_icon": "/res/icon/mytvtogo-logo.png",
+    "android_name": "MyTvToGo",
+    "android_handler": "skill-mytvtogo.jarbasskills.home"
+}

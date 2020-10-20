@@ -37,53 +37,25 @@ Item {
     }
     
     onMytvtogoHomeListModelChanged: {
-        mytvtogoListView.view.forceLayout()
+        mytvtogoListView.forceLayout()
     }
-
-
-    Flickable {
-        width: parent.width
-        height: parent.height
-        contentHeight: contentLayout.implicitHeight
     
-        ColumnLayout {
-            id: contentLayout
-            anchors {
-                left: parent.left
-                right: parent.right
-                margins: Kirigami.Units.largeSpacing * 3
-            }
-            property Item currentSection
-            readonly property int rowHeight: mytvtogoListView.cellWidth / 1.8 + Kirigami.Units.gridUnit * 7
-            readonly property int responsiveCellWidth: contentLayout.width >= 600 ? parent.width / 5 : parent.width / 2
-            y: currentSection ? -currentSection.y : 0
-
-            Behavior on y {
-                NumberAnimation {
-                    duration: Kirigami.Units.longDuration * 2
-                    easing.type: Easing.InOutQuad
-                }
-            }
-
-            spacing: Kirigami.Units.largeSpacing * 4
-                
-            Views.TileView {
-                id: mytvtogoListView
-                focus: false
-                model: mytvtogoHomeListModel
-                title: "MyTVToGo"
-                cellWidth: contentLayout.responsiveCellWidth
-                delegate: Delegates.ListVideoCard{}
-                onActiveFocusChanged: {
-                    if(activeFocus){
-                        contentLayout.currentSection = mytvtogoListView
-                    }
-                }
-
-                implicitHeight: contentLayout.rowHeight
-                navigationUp: homeCatButton
-            }
-
+    Item {
+        id: mytvtogoContainer
+        anchors.fill: parent
+        anchors.leftMargin: Kirigami.Units.gridUnit
+        anchors.rightMargin: Kirigami.Units.gridUnit
+            
+        Kirigami.CardsGridView {
+            id: mytvtogoListView
+            anchors.fill: parent
+            anchors.leftMargin: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
+            cellHeight: cellWidth * 0.5625 + Kirigami.Units.gridUnit * 2.5
+            displayMarginBeginning: 125
+            displayMarginEnd: 125
+            focus: false
+            model: mytvtogoHomeListModel
+            delegate: Delegates.GridVideoCard{}
         }
     }
 }

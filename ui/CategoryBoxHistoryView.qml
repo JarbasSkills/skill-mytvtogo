@@ -52,7 +52,7 @@ Item {
         model: historyListModel
         title: count > 0 ? "Watch History" : "No Recent History"
 
-        cellWidth: responsiveCellWidth
+        cellWidth: responsiveCellWidth 
         cellHeight: cellWidth / 1.8 + Kirigami.Units.gridUnit * 5
         delegate: Delegates.ListVideoCard {
             width: historyGridView.cellWidth

@@ -54,7 +54,7 @@ class MyTVtoGoSkill(CommonPlaySkill):
         
     @intent_file_handler('mytvtogohome.intent')
     def handle_homescreen_utterance(self, message):
-        self.handle_homescreen({}) 
+        self.handle_homescreen(message)
 
     # homescreen
     def handle_homescreen(self, message):
@@ -68,8 +68,7 @@ class MyTVtoGoSkill(CommonPlaySkill):
 
         # set history model
         self.gui["historyModel"] = []
-
-        self.gui.show_page("home.qml", override_idle=True)
+        self.gui.show_page("Homescreen.qml", override_idle=True)
 
     # play via GUI event
     def play_video_event(self, message):
