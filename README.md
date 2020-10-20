@@ -1,11 +1,12 @@
 # <img src='./res/MyTVToGo_icon_bg.png' card_color='#40DBB0' width='50' height='50' style='vertical-align:bottom'/> MyTVtoGo Skill
 
-MyTVtoGo for mycroft
-
+![](./res/MyTVToGo_bg.png)
 
 ## About 
 
-![](./res/MyTVToGo_bg.png)
+MyTVtoGo for mycroft
+
+![](./mytvtogo.png)
 
 ## Installation Notes
 
