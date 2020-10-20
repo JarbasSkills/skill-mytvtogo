@@ -63,7 +63,6 @@ ItemDelegate {
 
             layer.enabled: true
             layer.effect: OpacityMask {
-                cached: true
                 maskSource: Rectangle {
                     x: imgRoot.x;
                     y: imgRoot.y
@@ -76,7 +75,6 @@ ItemDelegate {
             Image {
                 id: img
                 source: model.logo ? model.logo : "https://uroehr.de/vtube/view/img/video-placeholder.png"
-                cache: true
                 anchors {
                     fill: parent
                     // To not round under
