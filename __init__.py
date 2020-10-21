@@ -68,7 +68,6 @@ class MyTVtoGoSkill(CommonPlaySkill):
         if not self.gui.connected:
             self.log.error("GUI is required for MyTVtoGo skill, "
                              "but no GUI connection was detected")
-            raise RuntimeError
 
         # History
         historyDB = JsonStorageXDG("mytvtogo-history")
