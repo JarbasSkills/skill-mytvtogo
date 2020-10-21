@@ -23,11 +23,7 @@ class MyTVtoGoSkill(CommonPlaySkill):
                                 CPSMatchType.MOVIE]
 
         # database update
-        path = join(XDG_DATA_HOME, "json_database")
-        if not exists(path):
-            makedirs(path)
-        path = join(path, "mytvtogo.jsondb")
-        copy(join(dirname(__file__), "res", "mytvtogo.jsondb"), path)
+        path = join(dirname(__file__), "res", "mytvtogo.jsondb")
 
         # load channel catalog
         self.mytvtogo = Collection("MyTVToGo",
@@ -35,21 +31,13 @@ class MyTVtoGoSkill(CommonPlaySkill):
                     db_path=path)
         self.channels = [ch.as_json() for ch in self.mytvtogo.entries]
 
-        # History
-        self.historyDB = JsonStorageXDG("mytvtogo-history")
-
-        if "model" in self.historyDB:
-            self.history_list = self.historyDB["model"]
-        else:
-            self.history_list = []
-
     def initialize(self):
         self.add_event('skill-mytvtogo.jarbasskills.home',
                        self.handle_homescreen)
         self.gui.register_handler("skill-mytvtogo.jarbasskills.play_event",
                                   self.play_video_event)
         self.gui.register_handler("skill-mytvtogo.jarbasskills.clear_history",
-                                  self.play_video_event)
+                                  self.clear_history_event)
 
     def get_intro_message(self):
         self.speak_dialog("intro")
@@ -61,7 +49,7 @@ class MyTVtoGoSkill(CommonPlaySkill):
     # homescreen
     def handle_homescreen(self, message):
         self.gui["mytvtogoHomeModel"] = self.channels
-        self.gui["historyModel"] = []
+        self.gui["historyModel"] = JsonStorageXDG("mytvtogo-history").get("model", [])
         self.gui.show_page("Homescreen.qml", override_idle=True)
 
     # play via GUI event
@@ -71,7 +59,9 @@ class MyTVtoGoSkill(CommonPlaySkill):
 
     # clear history event
     def clear_history_event(self, message):
-        self.historyDB.clear()
+        historyDB = JsonStorageXDG("mytvtogo-history")
+        historyDB["model"] = []
+        historyDB.store()
 
     # common play
     def play_channel(self, channel_data):
@@ -79,11 +69,15 @@ class MyTVtoGoSkill(CommonPlaySkill):
             self.log.error("GUI is required for MyTVtoGo skill, "
                              "but no GUI connection was detected")
             raise RuntimeError
-        # add to playback history
-        self.history_list.append(channel_data)
-        self.historyDB["model"] = self.history_list
-        self.historyDB.store()
-        self.gui["historyModel"] = self.historyDB["model"]
+
+        # History
+        historyDB = JsonStorageXDG("mytvtogo-history")
+        if "model" not in historyDB:
+            historyDB["model"] = []
+        historyDB["model"].append(channel_data)
+        historyDB.store()
+
+        self.gui["historyModel"] = historyDB["model"]
         # play video
         channel = Media.from_json(channel_data)
         url = str(channel.streams[0])
@@ -129,7 +123,7 @@ class MyTVtoGoSkill(CommonPlaySkill):
 
         if self.voc_match(phrase,
                           "movie") or media_type == CPSMatchType.MOVIE:
-            score += 0.2
+            score += 0.1
             match = CPSMatchLevel.CATEGORY
 
         return match, score
@@ -233,11 +227,11 @@ class MyTVtoGoSkill(CommonPlaySkill):
         else:
             score = base_score + best_score
 
-        if score >= 0.85:
+        if score >= 0.9:
             match = CPSMatchLevel.EXACT
-        elif score >= 0.7:
+        elif score >= 0.75:
             match = CPSMatchLevel.MULTI_KEY
-        elif score >= 0.5:
+        elif score >= 0.6:
             match = CPSMatchLevel.TITLE
 
         self.log.debug("Best MyTVtoGo channel: " + best_channel["title"])
