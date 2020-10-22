@@ -48,6 +48,7 @@ class MyTVtoGoSkill(CommonPlaySkill):
 
     # homescreen
     def handle_homescreen(self, message):
+        self.gui.clear()
         self.gui["mytvtogoHomeModel"] = self.channels
         self.gui["historyModel"] = JsonStorageXDG("mytvtogo-history").get("model", [])
         self.gui.show_page("Homescreen.qml", override_idle=True)
