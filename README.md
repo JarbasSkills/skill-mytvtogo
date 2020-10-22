@@ -28,7 +28,8 @@ this requires latest CPS refactor, not yet merged in core
 
 ## Credits 
 - JarbasAl
-- AIIX 
+- [AIIX ](https://github.com/AIIX/) - for GUI
+- [MyTVtoGo](https://mytvtogo.net/) 
 
 
 ## Category
